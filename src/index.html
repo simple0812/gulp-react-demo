@@ -1,0 +1,140 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>React Tutorial</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.0/react.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.0/react-dom.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js"></script>
+  <script>
+    (function($) {
+        var o = $({});
+
+        $.subscribe = function() {
+            o.on.apply(o, arguments);
+        };
+
+        $.unSubscribe = function() {
+            o.off.apply(o, arguments);
+        };
+
+        $.publish = function() {
+            o.trigger.apply(o, arguments);
+        };
+
+    }($));
+
+  </script>
+</head>
+
+<body>
+    <div id="content"></div>
+    <script type="text/babel">
+        var DATA = [];
+        var CommentBox = React.createClass({
+            getInitialState: function() {
+                return {data : []};
+            },
+            loadData: function() {
+                var _this = this;
+                $.getJSON(this.props.url).then(function(data) {
+                    DATA = data.result;
+                    _this.setState({data : data.result});
+                }).fail(function(err) {
+                })
+            },
+            componentDidMount: function() {
+                 this.loadData();
+                $.subscribe('addComment', function() {
+                    this.setState({data : DATA})
+                }.bind(this))
+                // setInterval(this.loadData, 2 * 1000)
+            },
+            componentWillMount : function() {console.log('componentWillMount')},
+            // componentDidMount  : function() {console.log('componentDidMount')},
+            componentWillReceiveProps  : function() {console.log('componentWillReceiveProps')},
+            // shouldComponentUpdate  : function() {console.log('shouldComponentUpdate')},
+            componentWillUpdate  : function() {console.log('componentWillUpdate', this.isMounted())},
+            componentDidUpdate : function() {console.log('componentDidUpdate')},
+            componentWillUnmount  : function() {console.log('componentWillUnmount')},
+            render : function() {
+                return (
+                    <div className="commentBox">
+                        <h1>commentList</h1>
+                        <CommentList data={this.state.data}/>
+                        <CommentForm />
+                    </div>
+                );
+            }
+        });
+
+        var CommentList = React.createClass({
+            render : function() {
+                var nodes = this.props.data.map(function(comment) {
+                    return (
+                        <Comment key={Math.random()} author={comment.author}>{comment.text}</Comment>
+                        );
+                })
+                return (
+                    <div className='commentList'  >{nodes}</div>
+                );
+            }
+        });
+
+        var CommentForm = React.createClass({
+            handleClick: function() {
+                var author = this.refs.author.value.trim();
+                var txt = this.refs.text.value.trim();
+
+                if(!txt || !author) {
+                    return ;
+                }
+
+                DATA.push({author:author, text :txt});
+                this.refs.author.value = '';
+                this.refs.text.value = '';
+
+                $.publish('addComment');
+            },
+            componentDidMount : function() {
+            },
+            render: function() {
+                return (
+                    <form className="commentForm">
+                        <input type='text' placeholder='Your name' ref='author'/>
+                        <input type='text' placeholder='say something' ref='text' />
+                        <input type='button' value='post' onClick={this.handleClick} />
+                    </form>
+                );
+            }
+        })
+
+        var Comment = React.createClass({
+            rawMarkup : function() {
+                var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
+                return {__html: rawMarkup};
+            },
+            render : function() {
+                return (
+                        <div className='comment'>
+                            <p className='commentAuthor'>
+                                {this.props.author}:
+                            </p>
+                           <span dangerouslySetInnerHTML={this.rawMarkup()} />
+                        </div>
+                );
+            }
+        });
+
+        ReactDOM.render(
+          <CommentBox url='/data/data.json' />,
+          document.getElementById('content')
+        );
+    </script>
+</body>
+
+</html>

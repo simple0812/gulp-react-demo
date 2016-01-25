@@ -1,0 +1,8 @@
+{
+	"code":"success",
+	"msg":"",
+	"result":[
+		{"author" : "zl", "text":"_hello_"},
+		{"author" : "lei", "text":"__world__"}
+	]
+}
